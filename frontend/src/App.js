@@ -1,7 +1,8 @@
-// App.js
 import React, { useState } from 'react';
 
 function App() {
+
+  const API_URL = process.env.REACT_APP_API_URL;
   const [name, setName] = useState('');
   const [radius, setRadius] = useState('');
 
@@ -14,7 +15,7 @@ function App() {
     };
 
     try {
-      const response = await fetch('http://localhost:3001/map/places/', {
+      const response = await fetch(`${API_URL}/map/places/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -23,36 +24,75 @@ function App() {
       });
 
       const data = await response.json();
-      console.log('Success:', data);
+      console.log('Place submitted:', data);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error submitting place:', error);
     }
   };
 
+const handleGenerateMap = async () => {
+  const place = {
+    name: name,
+    radius: parseFloat(radius),
+  };
+
+  try {
+    const response = await fetch(`${API_URL}/map/places/maps/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(place),
+    });
+
+    // Get the response as a Blob (binary data)
+    const blob = await response.blob();
+
+    // Create a blob URL from the response
+    const url = URL.createObjectURL(blob);
+
+    // Open the blob URL in a new tab
+    window.open(url, '_blank');
+  } catch (error) {
+    console.error('Error generating map:', error);
+  }
+};
+
+
   return (
-    <div className="App">
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Place Name:</label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
+    <div className="App" style={{ padding: '30px' }}>
+      <h1 style={{ textAlign: 'center' }}> Search hiking trails</h1>
+
+      <div style={{ textAlign: 'left' }}>
+        <p>Please enter the place name and search radius below:</p>
+        <form onSubmit={handleSubmit}>
+          <div>
+            <label>Place Name:</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <label>Radius:</label>
+            <input
+              type="number"
+              step="any"
+              value={radius}
+              onChange={(e) => setRadius(e.target.value)}
+              required
+            />
+          </div>
+          <button type="submit">Submit Place</button>
+        </form>
+
+        {/* New "Generate Map" button */}
+        <div style={{ marginTop: '20px' }}>
+          <button onClick={handleGenerateMap}>Generate Map</button>
         </div>
-        <div>
-          <label>Radius:</label>
-          <input
-            type="number"
-            step="any"
-            value={radius}
-            onChange={(e) => setRadius(e.target.value)}
-            required
-          />
-        </div>
-        <button type="submit">Submit Place</button>
-      </form>
+      </div>
     </div>
   );
 }
